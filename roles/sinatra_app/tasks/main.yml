@@ -1,0 +1,32 @@
+---
+# tasks file for sinatra_app
+
+- name: accept key
+  shell: "gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3"
+
+- name: Check if ruby already installed
+  stat: path=/etc/profile.d/rvm.sh
+  register: rvm_folder
+
+- name: install rvm
+  shell: "curl -L https://get.rvm.io | sudo bash -s stable --ruby=2.0.0 --gems=rails,puma"
+  when: rvm_folder.stat.isdir is not defined
+  become: true
+
+- name: install gem sinatra
+  shell: "gem install sinatra"
+  become: true
+  #gem: name=sinatra state=latest
+
+- name: copy application files
+  copy: src=/root/ansible_1/roles/sinatra_app/files/app1 dest=/root/
+
+- name: iptables off
+  shell: "service iptables stop"
+  become: true
+
+- name: start sinatra app
+  shell: ruby app.rb -e production & 
+  args:
+    chdir: /root/app1
+  become: true
